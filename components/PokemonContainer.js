@@ -1,9 +1,16 @@
 import React from "react";
 import {
   Container,
-  Row
+  Row,
+  Col,
+  InputGroup,
+  Form,
+  FormControl,
+  Button,
+  Spinner
 } from "react-bootstrap";
 
+import PokemonFilter from "./PokemonFilter";
 import PokemonCard from "./PokemonCard";
 import PokemonModal from "./PokemonModal";
 import PokemonLoadMore from "./PokemonLoadMore";
@@ -12,6 +19,10 @@ import { get } from "../utils/Axios";
 class PokemonContainer extends React.Component {
   state = {
     pokemons: [],
+    types: [],
+    type: "all",
+    search: "",
+    searching: false,
     offset: 18,
     loadMore: false,
     modal: false,
@@ -20,6 +31,7 @@ class PokemonContainer extends React.Component {
 
   componentDidMount() {
     this.getPokemonData();
+    this.getPokemonType();
   }
 
   getPokemonData = async (offset = null) => {
@@ -39,6 +51,53 @@ class PokemonContainer extends React.Component {
     });
   };
 
+  getPokemonType = async () => {
+    const {
+      data: { results }
+    } = await get(`${process.env.BASE_URL}/type`);
+    this.setState({ types: results });
+  };
+
+  setPokemonType = async evt => {
+    const value = evt.target.value;
+    this.setState({ type: value, search: "" });
+    if (value !== "all") {
+      const {
+        data: { pokemon }
+      } = await get(`${process.env.BASE_URL}/type/${value}`);
+      const pokemons = pokemon.reduce((result, current) => {
+        result.push(current.pokemon);
+        return result;
+      }, []);
+      this.setState({ pokemons });
+    } else {
+      this.setState({ pokemons: [] });
+      this.getPokemonData();
+    }
+  };
+
+  setSearch = evt => {
+    this.setState({ search: evt.target.value });
+  };
+
+  searchPokemon = async () => {
+    const search = this.state.search;
+    if (search !== "") {
+      this.setState({ searching: true });
+      get(`${process.env.BASE_URL}/pokemon/${search.toLowerCase()}`)
+        .then(({ data }) => {
+          this.setState({
+            pokemons: [{ name: data.name, url: data.species.url }]
+          });
+        })
+        .catch(err => {
+          alert("Not Found");
+        });
+    } else {
+      this.setState({ pokemons: [], searching: false });
+      this.getPokemonData();
+    }
+  };
 
   renderPokemon = () => {
     const { pokemons } = this.state;
@@ -71,13 +130,28 @@ class PokemonContainer extends React.Component {
     const {
       loadMore,
       modal,
-      detail
+      detail,
+      types,
+      type,
+      search,
+      searching
     } = this.state;
 
     return (
       <Container>
+        <PokemonFilter
+          filterType={this.setPokemonType}
+          types={types}
+          handleSearch={this.setSearch}
+          onSearch={this.searchPokemon}
+          search={search}
+        />
         <Row className="justify-content-md-center">{this.renderPokemon()}</Row>
-        <PokemonLoadMore getData={this.getPokemonData} loadMore={loadMore} />
+        {type === "all" && !searching ? (
+          <PokemonLoadMore getData={this.getPokemonData} loadMore={loadMore} />
+        ) : (
+          ""
+        )}
 
         <PokemonModal
           isShow={modal}

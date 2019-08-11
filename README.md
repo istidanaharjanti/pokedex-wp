@@ -13,4 +13,7 @@ $ yarn start
 
 # generate static project
 $ yarn run generate
+
+# run unit test
+$ yarn test
 ```

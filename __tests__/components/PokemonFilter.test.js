@@ -2,6 +2,7 @@ import { shallow } from 'enzyme';
 import React from 'react';
 
 import PokemonFilter from '../../components/PokemonFilter.js'
+import { FormControl, Button } from 'react-bootstrap';
 
 describe('PokemonFilter component', () => {
   let component;
@@ -10,7 +11,14 @@ describe('PokemonFilter component', () => {
   beforeEach(() => {
     const props = {
       filterType: _spies.onChange = jest.fn(),
-      types: [],
+      types: [
+        {
+          name: 'normal'
+        },
+        {
+          name: 'dragon'
+        }
+      ],
       handleSearch: _spies.onChange = jest.fn(),
       onSearch: _spies.onClick = jest.fn(),
       search: ''
@@ -22,5 +30,10 @@ describe('PokemonFilter component', () => {
 
   test('component exist', () => {
     expect(component.length).toBe(1);
+  });
+
+  test('onSearch', () => {
+    component.find(Button).simulate('click');
+    expect(_spies.onClick).toBeCalled();
   });
 })
